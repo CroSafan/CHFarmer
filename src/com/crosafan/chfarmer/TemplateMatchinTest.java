@@ -5,11 +5,11 @@ import java.awt.Robot;
 import java.awt.image.BufferedImage;
 
 import org.opencv.core.Core;
-import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -17,14 +17,15 @@ import org.opencv.imgproc.Imgproc;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 
-public class CHFarmer {
-
-	static double threshold = 1d; // Set your desired threshold value
+public class TemplateMatchinTest {
+	static double threshold = 0.7d; // Set your desired threshold value
 
 	public static void main(String[] args) {
 		System.loadLibrary("opencv_java480");
 
 		String windowTitle = "Clicker Heroes"; // Replace with the title of the target window
+
+		int match_method = Imgproc.TM_CCOEFF_NORMED;
 
 		// Find the window by title
 		WinDef.HWND hwnd = User32.INSTANCE.FindWindow(null, windowTitle);
@@ -42,37 +43,32 @@ public class CHFarmer {
 				// Capture the specified window's content
 				BufferedImage windowScreenshot = robot.createScreenCapture(
 						new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top));
-
 				Mat img1 = img2Mat(windowScreenshot);
-				Mat img2 = Imgcodecs.imread("Orangefish_sml.png");
-				// Loop over different scales and rotations
-				for (double scale = 0.5; scale <= 2.0; scale += 0.2d) {
-					System.out.println(scale);
-					for (double angle = 0.0; angle <= 360.0; angle += 45.0d) {
-						Mat rotatedImg2 = rotateAndScale(img2, angle, scale);
+				Mat img2 = Imgcodecs.imread("fish_test2.png");
 
-						// Create the result matrix
-						int result_cols = img1.cols() - rotatedImg2.cols() + 1;
-						int result_rows = img1.rows() - rotatedImg2.rows() + 1;
-						Mat result = new Mat(result_rows, result_cols, CvType.CV_32FC1);
+				// / Create the result matrix
+				int result_cols = img1.cols() - img2.cols() + 1;
+				int result_rows = img1.rows() - img2.rows() + 1;
+				Mat result = new Mat(result_rows, result_cols, CvType.CV_32FC1);
 
-						// Do the Matching and Normalize
-						Imgproc.matchTemplate(img1, rotatedImg2, result, 3);
-						Core.normalize(result, result, 0, 1, Core.NORM_MINMAX, -1, new Mat());
+				// / Do the Matching and Normalize
+				Imgproc.matchTemplate(img1, img2, result, match_method);
+				Core.normalize(result, result, 0, 1, Core.NORM_MINMAX, -1, new Mat());
 
-						MinMaxLocResult mmr = Core.minMaxLoc(result);
-						Point matchLoc;
-						if (mmr.maxVal >= threshold) {
-							matchLoc = mmr.maxLoc;
+				// / Localizing the best match with minMaxLoc
+				MinMaxLocResult mmr = Core.minMaxLoc(result);
 
-							// Show the match
-							Imgproc.rectangle(img1, matchLoc,
-									new Point(matchLoc.x + rotatedImg2.cols(), matchLoc.y + rotatedImg2.rows()),
-									new Scalar(0, 255, 0), 2);
-
-						}
-					}
+				Point matchLoc;
+				if (match_method == Imgproc.TM_SQDIFF || match_method == Imgproc.TM_SQDIFF_NORMED) {
+					matchLoc = mmr.minLoc;
+				} else {
+					matchLoc = mmr.maxLoc;
 				}
+
+				// / Show me what you got
+				Imgproc.rectangle(img1, matchLoc, new Point(matchLoc.x + img2.cols(), matchLoc.y + img2.rows()),
+						new Scalar(0, 255, 0), 5);
+
 				HighGui.imshow("Match", img1);
 				HighGui.waitKey();
 				HighGui.destroyAllWindows();
@@ -80,9 +76,7 @@ public class CHFarmer {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		} else
-
-		{
+		} else {
 			System.out.println("Window not found.");
 		}
 
@@ -118,23 +112,4 @@ public class CHFarmer {
 		out.put(0, 0, data);
 		return out;
 	}
-
-	protected static Mat rotateAndScale(Mat src, double angle, double scale) {
-		Point center = new Point(src.cols() / 2.0, src.rows() / 2.0);
-		Mat rotMat = Imgproc.getRotationMatrix2D(center, angle, scale);
-		Mat dst = new Mat();
-		Imgproc.warpAffine(src, dst, rotMat, src.size());
-		return dst;
-	}
-
-	private static Mat convertToGrayScale(Mat colorImage) {
-		// Create a Mat object to store the grayscale image
-		Mat grayImage = new Mat();
-
-		// Convert the color image to grayscale using Imgproc.cvtColor
-		Imgproc.cvtColor(colorImage, grayImage, Imgproc.COLOR_BGR2GRAY);
-
-		return grayImage;
-	}
-
 }
