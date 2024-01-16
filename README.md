@@ -6,7 +6,7 @@ CHFarmer is a Java project designed to automate the process of detecting gold fi
 
 ## Features
 
-- **Gold fish detection:** CHFarmer uses computer vision to detect where the goldfish is located
+- **Gold fish detection:** CHFarmer uses computer yolov8 custom model to detect where the goldfish is located
 
 
 
@@ -14,7 +14,7 @@ CHFarmer is a Java project designed to automate the process of detecting gold fi
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache-2.0 license](LICENSE).
 
 ---
 
