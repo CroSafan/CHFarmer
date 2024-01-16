@@ -1,0 +1,6 @@
+train: C:\Users\Antun\Documents\Projects\CHFarmer\yoloDetect/train
+val: C:\Users\Antun\Documents\Projects\CHFarmer\yoloDetect/val
+
+nc: 1
+
+names: ["fish"]
